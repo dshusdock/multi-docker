@@ -1,0 +1,22 @@
+sudo: required
+services: 
+    - docker
+
+before_install:
+    - docker build -t dshusdock/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true dshusdock/react-test npm test  -- --coverage
+
+after_success:
+    - docker build -t dshusdock/multi-client ./client
+    - docker build -t dshusdock/multi-nginx ./nginx
+    - docker build -t dshusdock/multi-server ./server
+    - docker build -t dshusdock/multi-worker ./worker
+
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+    - docker push dshusdock/multi-client
+    - docker push dshusdock/multi-nginx
+    - docker push dshusdock/multi-server
+    - docker push dshusdock/multi-worker
